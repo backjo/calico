@@ -335,7 +335,12 @@ if ($platform -EQ "aks") {
 }
 if ($platform -EQ "eks") {
     $awsNodeName = Invoke-RestMethod -uri http://169.254.169.254/latest/meta-data/local-hostname -ErrorAction Ignore
-    Write-Host "Setup Calico for Windows for EKS, node name $awsNodeName ..."
+    $awsRegion = Invoke-RestMethod -uri http://169.254.169.254/latest/meta-data/placement/region
+    if ($awsRegion -EQ "us-east-1") {
+            $awsNodeName = -join($awsNodeName, ".ec2.internal")
+    } Else {
+            $awsNodeName = -join($awsNodeName, ".", $awsRegion, ".compute.internal")
+    }    Write-Host "Setup Calico for Windows for EKS, node name $awsNodeName ..."
     $Backend = "none"
     $awsNodeNameQuote = """$awsNodeName"""
     SetConfigParameters -OldString '$(hostname).ToLower()' -NewString "$awsNodeNameQuote"
